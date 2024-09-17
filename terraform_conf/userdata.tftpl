@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Update the package list
+sudo apt-get update
+
+# Install Java (Jenkins requirement)
+sudo apt-get install -y openjdk-11-jdk
+
+# Install Jenkins
+sudo wget -O /usr/share/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc]" \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt-get update
+sudo apt-get install jenkins
+
+# Install azure cli
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+# Start Jenkins
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+
+# Install Docker
+sudo apt-get install -y docker.io
+
+# Add Jenkins user to Docker group
+sudo usermod -aG docker jenkins
+
+# Install Git
+sudo apt-get install -y git
+
