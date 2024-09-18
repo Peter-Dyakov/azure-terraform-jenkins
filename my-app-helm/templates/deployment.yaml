@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-app
+  name: {{ .Release.Name }}
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: my-app
+      app: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: my-app
+        app: {{ .Release.Name }}
     spec:
       containers:
-      - name: my-app
-        image: acr2bcloud.azurecr.io/flask-hello-app:latest
+      - name: {{ .Release.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         ports:
         - containerPort: 5000
 
@@ -46,11 +46,15 @@ spec:
         - name: MY_SECRET
           valueFrom:
             secretKeyRef:
-              name: my-secret-vol 
+              name: my-secret 
               key: my-secret
+        volumeMounts:
+          - name:  secret-store
+            mountPath:  "mnt/secret-store"
+            readOnly: true
 
       volumes:
-      - name: my-secret-vol
+      - name: secret-store
         csi:
           driver: secrets-store.csi.k8s.io
           readOnly: true

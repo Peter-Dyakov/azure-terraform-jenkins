@@ -7,7 +7,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "${random_pet.prefix.id}-aks1"
+  name                = "${random_pet.prefix.id}-aks"
   location            = var.location
   resource_group_name = var.resource_group_name
   dns_prefix          = "${random_pet.prefix.id}-k8s"
@@ -95,7 +95,7 @@ resource "kubernetes_namespace" "ingress-nginx" {
 } 
 
 resource "azurerm_public_ip" "nginx_ingress_ip" {
-  name                = "nginx-ingress-ip"
+  name                = "nginx-ingress-ip-static"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
@@ -108,51 +108,38 @@ resource "helm_release" "nginx_ingress" {
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
   namespace  = "ingress-nginx"
-
-  set {
-    name  = "controller.service.loadBalancerIP"
-    value = azurerm_public_ip.nginx_ingress_ip.ip_address
-  }
-
-  set {
-    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/azure-dns-label-name"
-    value = "2bcloud-dns-label"
-  }
 }
 
+# Horizontal Pod Autoscaler (HPA) configuration
+resource "kubernetes_horizontal_pod_autoscaler_v2" "hpa" {
+  depends_on = [azurerm_kubernetes_cluster.aks]
+  metadata {
+    name      = "flask-hpa"
+  }
 
-# # Horizontal Pod Autoscaler (HPA) configuration
-# resource "kubernetes_horizontal_pod_autoscaler" "hpa" {
-#   depends_on = [azurerm_kubernetes_cluster.aks]
-#   metadata {
-#     name      = "flask-hpa"
-#     namespace = "kube-system"
-#   }
+  spec {
+    scale_target_ref {
+      kind        = "Deployment"
+      name        = "my-app"
+    }
 
-#   spec {
-#     scale_target_ref {
-#       api_version = "apps/v1"
-#       kind        = "Deployment"
-#       name        = "my-app"
-#     }
+    min_replicas = 1
+    max_replicas = 10
 
-#     min_replicas = 1
-#     max_replicas = 10
+    # Define the metric and threshold for CPU usage
+    metric {
+      type = "Resource"
 
-#     # Define the metric and threshold for CPU usage
-#     metric {
-#       type = "Resource"
-
-#       resource {
-#         name  = "cpu"
-#         target {
-#           type               = "Utilization"
-#           average_utilization = 50
-#         }
-#       }
-#     }
-#   }
-# }
+      resource {
+        name  = "cpu"
+        target {
+          type               = "Utilization"
+          average_utilization = 50
+        }
+      }
+    }
+  }
+}
 
 # Install Redis Sentinel
 resource "helm_release" "redis_sentinel" {
@@ -193,6 +180,4 @@ resource "azurerm_key_vault_access_policy" "aks_policy" {
     "List"
   ]
 }
-
-
 

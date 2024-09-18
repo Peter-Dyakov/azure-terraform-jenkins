@@ -1,0 +1,5 @@
+# values.yaml
+
+image:
+  repository: "acr2bcloud.azurecr.io/flask-hello-app"
+  tag: "latest"

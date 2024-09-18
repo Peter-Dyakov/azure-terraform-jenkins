@@ -4,7 +4,7 @@ pipeline {
     environment {
         REGISTRY = 'acr2bcloud.azurecr.io/flask-hello-app'
         ACR_LOGIN_SERVER = 'acr2bcloud.azurecr.io'
-        TAG = 'latest'
+        TAG = "${BUILD_ID}"
         dockerImage = ''
     } 
     
@@ -33,9 +33,7 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'K8S', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-                        sh ('kubectl apply -f k8s_files/deployment.yaml')
-                        sh ('kubectl apply -f k8s_files/service.yaml')
-                        sh ('kubectl apply -f k8s_files/ingress.yaml')
+                        sh ('helm upgrade --install my-app ./my-app-helm --set image.tag=${TAG}')
                     }
                 }
             }
