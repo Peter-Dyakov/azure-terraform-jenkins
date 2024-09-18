@@ -40,3 +40,19 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "500m"
+
+      # Add environment variable to read the secret
+        env:
+        - name: MY_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: my-secret-vol 
+              key: my-secret
+
+      volumes:
+      - name: my-secret-vol
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "azure-keyvault"

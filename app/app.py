@@ -1,10 +1,13 @@
 from flask import Flask
+import os
 from flask import Flask, render_template, request, jsonify
 app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    return 'Hello, World!'
+    # Get the secret value from environment variable
+    secret_value = os.getenv('MY_SECRET', 'DefaultSecretValue')
+    return f'Hello World! Secret: {secret_value}'
 
 @app.route('/health')
 def health_check():
